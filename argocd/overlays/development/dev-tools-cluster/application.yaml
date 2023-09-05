@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     path: argocd/overlays/development/dev-tools-cluster
-    repoURL: ''
+    repoURL: https://github.com/bejohen/k8-tools-manifest
     targetRevision: HEAD
   syncPolicy:
     automated:

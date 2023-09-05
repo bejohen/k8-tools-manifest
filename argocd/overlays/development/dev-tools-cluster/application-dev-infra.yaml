@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     path: vault
-    repoURL: ""
+    repoURL: https://github.com/bejohen/k8-tools-manifest
     targetRevision: HEAD
   syncPolicy:
     automated:

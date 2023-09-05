@@ -1,0 +1,14 @@
+apiVersion: v1
+data:
+  accounts.admin: apiKey
+  admin.enabled: "true"
+  kustomize.buildOptions: --enable-alpha-plugins
+  statusbadge.enabled: "true"
+  url: http://localhost:8080
+  repositories: | #pragma: allowlist secret
+    - type: git
+      url: https://github.com/bejohen/k8-tools-manifest
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
