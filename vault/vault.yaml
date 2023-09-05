@@ -13,9 +13,8 @@ spec:
     chart: hashicorp/vault
   destination:
     namespace: vault
-    name : dev-app-cluster
+    name : in-cluster
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
       - ApplyOutOfSyncOnly=true
-      

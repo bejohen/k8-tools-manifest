@@ -6,3 +6,6 @@ namespace: argocd
 resources:
 - application.yaml
 - application-dev-infra.yaml
+
+patchesStrategicMerge:
+- argocd-cm.yaml
