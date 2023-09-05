@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-deployment
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: copy-default-config
+          env:
+            - name: JENKINS_UC_DOWNLOAD
+              value: 'https://mirrors.cloud.tencent.com/jenkins/'

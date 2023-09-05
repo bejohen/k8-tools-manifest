@@ -1,0 +1,196 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-casc-config-file-provider
+  labels:
+    service_name: jenkins
+    service_type: jenkins
+data:
+  configfileprovider.yaml: |-
+    unclassified:
+      globalConfigFiles:
+        configs:
+          - custom:
+              id: DOCKERFILE-CONFIG
+              name: DOCKERFILE-CONFIG
+              comment: dockerfile for pull the application config
+              content: |
+                FROM alpine
+                ARG APPLICATION_CONFIG
+                RUN mkdir /config
+                RUN ADD ^${APPLICATION_CONFIG} /config/.
+          - custom:
+              id: ARGC
+              name: ARGC
+              comment: script for housekeep gcr image
+              content: |
+                #!/bin/bash
+                IFS=$'\n\t'
+                set -eou pipefail
+
+                if [[ "$#" -ne 2 || "^${1}" == '-h' || "^${1}" == '--help' ]]; then
+                  cat >&2 <<"EOF"
+                argc.sh cleans up tagged or untagged images pushed leaving only last specified number
+                for a given repository (an image name without a tag/digest).
+                USAGE:
+                  argc.sh REPOSITORY AMOUNT-TO-LEAVE-COMMON-TAG AMOUNT-TO-LEAVE-SEMANTIC-TAG
+                EXAMPLE
+                  argc.sh asia-southeast2-docker.pkg.dev/ajaib-devops-dev/coin-custody-application/coin-custody-application 3 5
+                  would clean up everything under the asia-southeast2-docker.pkg.dev/ajaib-devops-dev/coin-custody-application/coin-custody-application repository leaving only last 3.
+                EOF
+                  exit 1
+                fi
+
+                main(){
+                  local C=0
+                  IMAGE="^${1}"
+                  AMOUNT_COMMON_IMAGE_TO_LEAVE="^${2}"
+                  AMOUNT_SEMANTIC_IMAGE_TO_LEAVE="^${3}"
+                  INDEX_COMMON=0
+                  INDEX_SEMVER=0
+
+                  IMAGE_TAGS_LIST=$(gcloud artifacts docker images list ^${IMAGE} --include-tags --limit=999999 --sort-by=~CREATE_TIME --format='get(tags)')
+                  IMAGE_TAGS_LIST_ARRAY=($IMAGE_TAGS_LIST)
+
+                  for TAG in "^${IMAGE_TAGS_LIST_ARRAY[@]}"; do
+                    if [[ $TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+                      if [ $INDEX_SEMVER -ge $AMOUNT_SEMANTIC_IMAGE_TO_LEAVE ]; then
+                          (
+                            set -x
+                            gcloud artifacts docker images delete "^${IMAGE}:^${TAG}" --delete-tags --quiet
+                            # echo "DELETE SEMVER ^${IMAGE}:^${TAG}"
+                          )
+                          let C=C+1
+                      fi
+                      let INDEX_SEMVER=^${INDEX_SEMVER}+1
+                    else
+                      if [ $INDEX_COMMON -ge $AMOUNT_COMMON_IMAGE_TO_LEAVE ]; then
+                          (
+                            set -x
+                            gcloud artifacts docker images delete "^${IMAGE}:^${TAG}" --delete-tags --quiet
+                            # echo "DELETE COMMON ^${IMAGE}:^${TAG}"
+                          )
+                          let C=C+1
+                      fi
+                      let INDEX_COMMON=^${INDEX_COMMON}+1
+                    fi
+                  done
+                  echo "Deleted ^${C} images in ^${IMAGE}." >&2
+                }
+
+                main "^${1}" "^${2}" "^${3:-10}"
+          - mavenSettings:
+              id: MAVEN_SETTINGS
+              name: MAVEN_SETTINGS
+              comment: settings.xml for maven
+              isReplaceAll: false
+              content: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                  <servers>
+                    <server>
+                      <username>${github_username}</username>
+                      <password>${github_token}</password>
+                      <id>github.com</id>
+                    </server>
+                    <server>
+                      <username>${nexus_jenkins_user}</username>
+                      <password>${nexus_jenkins_password}</password>
+                      <id>central</id>
+                    </server>
+                    <server>
+                      <username>${nexus_jenkins_user}</username>
+                      <password>${nexus_jenkins_password}</password>
+                      <id>snapshots</id>
+                    </server>
+                    <server>
+                      <username>${nexus_jenkins_user}</username>
+                      <password>${nexus_jenkins_password}</password>
+                      <id>releases</id>
+                    </server>
+                  </servers>
+                  <profiles>
+                    <profile>
+                      <properties>
+                        <sonar.host.url>https://sonar.ajaib.io</sonar.host.url>
+                        <sonar.login>"${sonarqube_token}"</sonar.login>
+                      </properties>
+                      <id>artifactory</id>
+                    </profile>
+                  </profiles>
+                  <activeProfiles>
+                    <activeProfile>artifactory</activeProfile>
+                  </activeProfiles>
+                  <localRepository>/var/maven/repository</localRepository>
+                </settings>
+          - mavenSettings:
+              id: MAVEN_SETTINGS_TEST
+              name: MAVEN_SETTINGS_TEST
+              comment: settings.xml for maven
+              isReplaceAll: false
+              content: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                  <servers>
+                    <server>
+                      <username>${github_username}</username>
+                      <password>${github_token}</password>
+                      <id>github.com</id>
+                    </server>
+                    <server>
+                      <username>${nexus_jenkins_user}</username>
+                      <password>${nexus_jenkins_password}</password>
+                      <id>central</id>
+                    </server>
+                    <server>
+                      <username>${nexus_jenkins_user}</username>
+                      <password>${nexus_jenkins_password}</password>
+                      <id>snapshots</id>
+                    </server>
+                    <server>
+                      <username>${nexus_jenkins_user}</username>
+                      <password>${nexus_jenkins_password}</password>
+                      <id>releases</id>
+                    </server>
+                  </servers>
+                  <profiles>
+                    <profile>
+                      <properties>
+                        <sonar.host.url>https://sonarqube.kepo.red</sonar.host.url>
+                        <sonar.login>"${sonarqube_token_test}"</sonar.login>
+                      </properties>
+                      <id>artifactory</id>
+                    </profile>
+                  </profiles>
+                  <activeProfiles>
+                    <activeProfile>artifactory</activeProfile>
+                  </activeProfiles>
+                  <localRepository>/var/maven/repository</localRepository>
+                </settings>
+          - custom:
+              id: JOB-RELOAD-CONSOLE-SCRIPT
+              name: JOB-RELOAD-CONSOLE-SCRIPT
+              comment: script for reloading all job with console script
+              content: |
+                import com.cloudbees.hudson.plugins.folder.*
+                void processFolder(Item folder) {
+                    folder.getItems().each{
+                        if(it instanceof Folder){
+                            processFolder(it)
+                        }else{
+                            processJob(it)
+                        }
+                    }
+                }
+                void processJob(Item job){
+                    job.doReload()
+                }
+                Jenkins.instance.getItems().each{
+                    if(it instanceof Folder){
+                        processFolder(it)
+                    }else{
+                        processJob(it)
+                    }
+                }

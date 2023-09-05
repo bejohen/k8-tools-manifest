@@ -1,0 +1,8 @@
+namespace: jenkins
+commonLabels:
+  service_group: tools
+resources:
+- jenkins-namespace.yaml
+- service-account.yaml
+- rbac.yaml
+- jenkins-service-account-token.yaml

@@ -1,0 +1,67 @@
+namespace: jenkins
+resources:
+- ../../base
+- jenkins_casc/jenkins-casc-configmap.yaml
+
+
+labels:
+- fields:
+  - create: true
+    kind: Deployment
+    path: spec/template/metadata/labels
+  - create: true
+    kind: CronJob
+    path: spec/jobTemplate/metadata/labels
+  pairs:
+    cluster_name: dev-tools-cluster
+    environment: development
+
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/rules/0
+      value:
+        host: "cicd.dev.istock.co.id"
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jenkins-master-svc
+                port:
+                  number: 8080
+  target:
+    kind: Ingress
+    name: jenkins-server-ingress
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/memory
+      value: 8192Mi
+  target:
+    kind: Deployment
+    name: jenkins-deployment
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: 6144Mi
+  target:
+    kind: Deployment
+    name: jenkins-deployment
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/cpu
+      value: 2000m
+  target:
+    kind: Deployment
+    name: jenkins-deployment
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/cpu
+      value: 3000m
+  target:
+    kind: Deployment
+    name: jenkins-deployment
+- path: deployment-patch.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

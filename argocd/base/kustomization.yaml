@@ -1,0 +1,8 @@
+bases:
+- github.com:argoproj/argo-cd//manifests/ha/cluster-install?ref=v2.7.5&timeout=90s
+
+namespace: argocd
+
+resources:
+- namespace.yaml
+- projects.yaml

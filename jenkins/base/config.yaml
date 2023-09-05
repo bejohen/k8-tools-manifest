@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-config
+  labels:
+    service_name: jenkins
+    service_type: jenkins
+data:
+  apply_config.sh: |-
+    # install wget
+    apt-get update;
+    apt-get install -y wget;
+    # Install missing plugins
+    cp /var/jenkins_config/plugins.txt /var/jenkins_home;
+    rm -rf /usr/share/jenkins/ref/plugins/*.lock;
+    #/usr/local/bin/install-plugins.sh `echo $(cat /var/jenkins_home/plugins.txt)`;
+    jenkins-plugin-cli --plugin-file /var/jenkins_home/plugins.txt --plugin-download-directory /usr/share/jenkins/ref/plugins --latest false --verbose;
+    # Copy plugins to shared volume
+    yes n | cp -i /usr/share/jenkins/ref/plugins/* /var/jenkins_plugins/;
+    # install gcloud
+    wget -O /tmp/google-cloud-sdk.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-413.0.0-linux-x86_64.tar.gz;
+    tar -xvf /tmp/google-cloud-sdk.tar.gz -C /var/jenkins_home;
+    exec /var/jenkins_home/google-cloud-sdk/install.sh --quiet --install-python true;
+    rm -rf /tmp/google-cloud-sdk*;
+  plugins.txt: |- #pragma: allowlist secret`
+    kubernetes:1.29.6
+    mask-passwords:3.3
+    workflow-job:1189.va_d37a_e9e4eda_
+    workflow-aggregator:2.6
+    credentials-binding:523.vd859a_4b_122e6
+    credentials:1129.vef26f5df883c
+    git:4.11.3
+    configuration-as-code:1414.v878271fc496f
+    job-dsl:1.77
+    google-login:1.6
+    config-file-provider:3.8.0
+    sonar:2.13.1
+    slack:2.48
+    build-user-vars-plugin:1.7
+    jobConfigHistory:2.27
+    blueocean:1.24.7
+    extra-columns:1.23
+    uno-choice:2.5.6
+    purge-build-queue-plugin:1.0
+    matrix-auth:2.6.7
+    role-strategy:3.1.1
+    terraform:1.0.10
+    list-git-branches-parameter:0.0.9
+    git-parameter:0.9.13
+    token-macro:293.v283932a_0a_b_49
+    pipeline-github:2.7
+    github-autostatus:3.6.2
+    pipeline-utility-steps:2.6.1
+    google-container-registry-auth:0.3
+    radioactive-parameter-plugin::https://storage.googleapis.com/public-jenkins-plugin/radioactive-parameter-plugin-jenkins-compatible-2-277-1.hpi
+    image-tag-parameter::https://storage.googleapis.com/public-jenkins-plugin/image-tag-parameter.hpi
+    rebuild:1.32
+    google-oauth-plugin:1.0.6
+    prometheus:2.0.11
+    

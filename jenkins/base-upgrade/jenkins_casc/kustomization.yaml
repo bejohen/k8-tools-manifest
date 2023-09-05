@@ -1,0 +1,6 @@
+namespace: jenkins
+commonLabels:
+  service_group: tools
+resources:
+- jenkins-casc-config-file-provider.yaml
+- jenkins-casc-reload-cronjob.yaml

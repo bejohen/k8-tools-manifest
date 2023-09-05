@@ -1,0 +1,221 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-casc-config
+  labels:
+    service_name: jenkins
+    service_type: jenkins
+data:
+  jenkins.yaml: |- #pragma: allowlist secret
+    jenkins:
+      systemMessage: |
+        Welcome To Ajaib Jenkins!
+        This Jenkins (will be) 100% managed by 'configuration as a code'
+      agentProtocols:
+      - "JNLP4-connect"
+      - "Ping"
+      authorizationStrategy:
+        roleBased:
+          roles:
+            global:
+              - name: "Admin"
+                description: "Jenkins administrators"
+                permissions:
+                  - "Overall/Administer"
+                assignments:
+                  - "johanes.steven@istock.co.id"
+              - name: "Developer"
+                description: "Developer"
+                permissions:
+                  - "Job/Read"
+                  - "Job/Build"
+                  - "Job/Cancel"
+                  - "View/Read"
+                  - "Agent/Build"
+                  - "Credentials/View"
+                  - "Overall/Read"
+                assignments:
+                  - "authenticated"
+      clouds:
+      - kubernetes:
+          containerCapStr: "50"
+          jenkinsTunnel: "jenkins-agent-svc.jenkins:50000"
+          jenkinsUrl: "http://jenkins-master-svc.jenkins:8080"
+          maxRequestsPerHostStr: "32"
+          name: "kubernetes"
+          namespace: "jenkins"
+          serverUrl: "https://10.197.252.2"
+      # - kubernetes:
+      #     containerCapStr: "50"
+      #     jenkinsTunnel: "jenkins-agent-svc.jenkins:50000"
+      #     jenkinsUrl: "http://jenkins-master-svc.jenkins:8080"
+      #     maxRequestsPerHostStr: "32"
+      #     credentialsId: "ajaib-dev-platform-cluster-0-jenkins-token"
+      #     name: "kubernetes-ajaib-dev-platform-cluster-0"
+      #     namespace: "jenkins"
+      #     serverUrl: "https://34.101.186.146"
+      #     skipTlsVerify: true
+      crumbIssuer:
+        standard:
+          excludeClientIPFromCrumb: true
+      disableRememberMe: false
+      labelString: "master"
+      markupFormatter: "plainText"
+      mode: NORMAL
+      myViewsTabBar: "standard"
+      numExecutors: 5
+      primaryView:
+        all:
+          name: "all"
+      projectNamingStrategy: "standard"
+      quietPeriod: 5
+      remotingSecurity:
+        enabled: false
+      scmCheckoutRetryCount: 0
+      securityRealm:
+        googleOAuth2:
+          clientId: "210079109042-dsk0pj808mdjerf4hkm8uqu5kojemu66.apps.googleusercontent.com"
+          clientSecret: "{AQAAABAAAAAwDgWWVsMdOL3eEBwq3ETmXZdyCAz7BDIOOB49bWD07qIZJSZz/Pn9mYRMLzg5cNUPFlD3Wx5pPXMZyfAfh1mzvg==}"
+          domain: "istock.co.id"
+      slaveAgentPort: 50000
+      updateCenter:
+        sites:
+        - id: "default"
+          url: "https://updates.jenkins.io/update-center.json"
+      viewsTabBar: "standard"
+    security:
+      scriptApproval:
+        approvedSignatures:
+          - "method hudson.model.AbstractItem doReload"
+          - "method hudson.model.ItemGroup getItems"
+          - "method org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval getPendingScripts"
+          - "staticMethod jenkins.model.Jenkins getInstance"
+          - "staticMethod org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval get"
+          - "method org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval$PendingScript getHash"
+          - "method org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval approveScript java.lang.String"
+      apiToken:
+        creationOfLegacyTokenEnabled: false
+        tokenGenerationOnCreationEnabled: false
+        usageStatisticsEnabled: true
+      globalJobDslSecurityConfiguration:
+        useScriptSecurity: false
+      sSHD:
+        port: -1
+    tool:
+      git:
+        installations:
+        - home: "git"
+          name: "Default"
+      sonarRunnerInstallation:
+        installations:
+        - name: "sonar-scanner"
+          properties:
+          - installSource:
+              installers:
+              - sonarRunnerInstaller:
+                  id: "4.2.0.1873"
+      terraform:
+        installations:
+        - name: "terraform0131"
+          properties:
+          - installSource:
+              installers:
+              - TerraformInstaller:
+                  id: "0.13.1-linux-amd64"
+        - name: "terraform"
+          properties:
+          - installSource:
+              installers:
+              - TerraformInstaller:
+                  id: "0.14.7-linux-amd64"
+    unclassified:
+      gitLabConnectionConfig:
+        connections:
+        - apiTokenId: "gitlab-api-token"
+          clientBuilderId: "autodetect"
+          connectionTimeout: 10
+          ignoreCertificateErrors: false
+          name: "gitlab"
+          readTimeout: 10
+          url: "https://git.istock.co.id"
+        useAuthenticatedEndpoint: true
+      location:
+        adminAddress: "address not configured yet <nobody@nowhere>"
+        url: "https://cicd.dev.istock.co.id/"
+      sonarglobalconfiguration:
+        buildWrapperEnabled: true
+        installations:
+          - name: "sonar-ajaib"
+            serverUrl: "https://sonar.ajaib.io"
+            credentialsId: sonarqube-token
+          - name: "sonar-ajaib-gcp"
+            serverUrl: "https://sonarqube.kepo.red"
+            credentialsId: sonarqube-token-gcp
+      globalLibraries:
+        libraries:
+          - name: "imperative-when"
+            defaultVersion: "master"
+            implicit: true
+            retriever:
+              modernSCM:
+                scm:
+                  git:
+                    remote: "https://github.com/comquent/imperative-when.git"
+      slackNotifier:
+        botUser: true
+        iconEmoji: ":pepe-horny:"
+        room: "dev-deployment-alert"
+        sendAsText: false
+        teamDomain: "Ajaib"
+        tokenCredentialId: "slack-token"
+        username: "Jenkins"
+    jobs:
+      - script: >
+          pipelineJob('JOB-DSL') {
+            logRotator {
+                numToKeep 10
+            }
+            triggers {
+                gitlab{
+                    secretToken('90a3c76f5cb507db55bf320e4fc4bff1')
+                }
+            }
+            configure {
+              (it / 'concurrentBuild').setValue('false')
+            }
+            definition {
+              cpsScm {
+                scm {
+                  git {
+                    remote {
+                      url('https://git.istock.co.id/devops/jenkins-dsl/')
+                      credentials('gitlab-devops')
+                      scriptPath('Jenkinsfile.dev')
+                    }
+                      branch('main')
+                  }
+                }
+                lightweight()
+              }
+            }
+          }
+    credentials:
+      system:
+        domainCredentials:
+        - credentials:
+          - usernamePassword:
+              description: "gitlab devops credentials"
+              id: "gitlab-devops"
+              password: "{AQAAABAAAAAgKEJCiMKNod5iYvN472FfeJ8vLlkVmNtBXgsACkHVFgfkApajzsJ3ECECZIa607+4}"
+              scope: GLOBAL
+              username: "deployer"
+          - gitLabApiTokenImpl:
+              apiToken: "{AQAAABAAAAAgWQDHormXP7UNNoS0zVmzOPuTHuggEmj9Bs6rP3Qz3mBukwc8wz5sN5S3ThmIg1da}"
+              description: "gitlab api token"
+              id: "gitlab-api-token"
+              scope: GLOBAL
+          - string:
+              description: "gitlab-secret-token"
+              id: "gitlab-secret-token"
+              scope: GLOBAL
+              secret: "{AQAAABAAAAAwsH2BcEnn+jb+f/Aqbt3J4MGC1dRKZzmQftFuejS9r/KbLPOujh2vjVRRqNUyaOT4d9JVIFlK8acsitODIv8qvw==}"

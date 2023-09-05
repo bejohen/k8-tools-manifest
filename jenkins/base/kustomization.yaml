@@ -1,0 +1,11 @@
+namespace: jenkins
+commonLabels:
+  service_group: tools
+resources:
+- jenkins-master-deployment.yaml
+- jenkins-master-svc.yaml
+- jenkins-agent-svc.yaml
+- jenkins-pvc.yaml
+- config.yaml
+- jenkins_casc
+- rbac-sa-ns

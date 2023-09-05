@@ -1,0 +1,34 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jenkins-schedule-agents-role
+  labels:
+    service_name: jenkins
+    service_type: jenkins
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/exec", "pods/log", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "pods/exec", "persistentvolumeclaims"]
+  verbs: ["create", "delete", "deletecollection", "patch", "update"]
+- apiGroups: ["", "apps"]
+  resources: ["secrets", "deployments", "events"]
+  verbs: ["create","get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jenkins-schedule-agents-rolebinding
+  labels:
+    service_name: jenkins
+    service_type: jenkins
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jenkins-schedule-agents-role
+subjects:
+- kind: ServiceAccount
+  name: jenkins-service-account
+  namespace: jenkins

@@ -1,0 +1,27 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: jenkins-casc-reload
+  labels:
+    service_name: jenkins-casc
+    service_type: jenkins-casc
+spec:
+  schedule: "* * * * *"
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    metadata:
+      labels:
+        service_name: jenkins-casc
+        service_type: jenkins-casc
+    spec:
+      activeDeadlineSeconds: 5
+      template:
+        spec:
+          containers:
+          - name: jenkins-casc-reload
+            image: curlimages/curl
+            args:
+            - /bin/sh
+            - -c
+            - curl -XPOST "http://$(JENKINS_MASTER_SVC_SERVICE_HOST):$(JENKINS_MASTER_SVC_SERVICE_PORT)/reload-configuration-as-code/?casc-reload-token=ajaibajaibajaib"
+          restartPolicy: Never

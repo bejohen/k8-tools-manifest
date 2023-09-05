@@ -1,0 +1,7 @@
+namespace: jenkins
+commonLabels:
+  service_group: tools
+resources:
+- nfs-deployment.yaml
+- nfs-pv-pvc.yaml
+- nfs-service.yaml

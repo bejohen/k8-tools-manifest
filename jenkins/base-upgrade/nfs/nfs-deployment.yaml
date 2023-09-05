@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-server-deployment
+  labels:
+    service_name: nfs-server
+    service_type: nfs-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_name: nfs-server
+  template:
+    metadata:
+      labels:
+        service_name: nfs-server
+        service_type: nfs-server
+    spec:
+      containers:
+      - name: nfs-server
+        image: gcr.io/google_containers/volume-nfs:0.8
+        ports:
+        - name: nfs
+          containerPort: 2049
+          protocol: TCP
+        - name: mountd
+          containerPort: 20048
+          protocol: TCP
+        - name: rpcbind
+          containerPort: 111
+          protocol: TCP
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /exports
+          name: nfs-jenkins
+      dnsPolicy: ClusterFirst
+      volumes:
+        - name: nfs-jenkins
+          persistentVolumeClaim:
+            claimName: nfs-pvc
+      nodeSelector:
+        failure-domain.beta.kubernetes.io/zone: asia-southeast2-a

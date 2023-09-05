@@ -1,0 +1,15 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: jenkins-pvc
+  labels:
+    service_name: jenkins
+    service_type: jenkins
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  storageClassName: alicloud-disk-essd
+  resources:
+    requests:
+      storage: "20Gi"
